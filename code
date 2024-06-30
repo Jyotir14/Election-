@@ -1,0 +1,124 @@
+pip install requests beautifulsoup4 selenium pandas
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+def scrape_results(state_url):
+response = requests.get(state_url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    table = soup.find('table', {'class': 'table'})  
+
+        return pd.DataFrame() 
+
+    headers = [th.text.strip() for th in table.find_all('th')]
+
+    rows = []
+    for tr in table.find_all('tr')[1:]: 
+        cells = [td.text.strip() for td in tr.find_all('td')]
+        rows.append(cells)
+    
+    max_columns = max(len(row) for row in rows)
+    columns = headers[:max_columns] 
+    df = pd.DataFrame(rows, columns=columns)
+    return df
+
+state_urls = {
+    'up': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S24.htm',  
+    'gujarat': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S06.htm',
+    'maharashtra': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S13.htm',  
+    'rajasthan': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S08.htm', 
+    'delhi': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S07.htm' 
+}
+
+results = {state: scrape_results(url) for state, url in state_urls.items()}
+
+print(results['up'])
+
+for state, df in results.items():
+    if not df.empty and 'Party' in df.columns and 'Seats' in df.columns:
+        bjp_results = df[df['Party'] == 'BJP']
+        total_seats = bjp_results['Seats'].astype(int).sum()  
+        print(f'Total seats won by BJP in {state}: {total_seats}')
+
+state_urls = {
+    'up': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S24.htm',  
+    'gujarat': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S06.htm', 
+    'maharashtra': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S13.htm',  
+    'rajasthan': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S08.htm',  
+    'delhi': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S07.htm' 
+}
+
+
+results = {state: scrape_results(url) for state, url in state_urls.items()}
+print(results['delhi'])
+
+for state, df in results.items():
+    if not df.empty and 'Party' in df.columns and 'Seats' in df.columns:
+        bjp_results = df[df['Party'] == 'BJP']
+        total_seats = bjp_results['Seats'].astype(int).sum() 
+        print(f'Total seats won by BJP in {state}: {total_seats}')
+
+
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def scrape_results(state_url):
+    response = requests.get(state_url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    table = soup.find('table', {'class': 'table'}) 
+
+    if table is None:
+        return pd.DataFrame() 
+
+    headers = [th.text.strip() for th in table.find_all('th')]
+
+    rows = []
+    for tr in table.find_all('tr')[1:]: 
+        cells = [td.text.strip() for td in tr.find_all('td')]
+        rows.append(cells)
+    
+    max_columns = max(len(row) for row in rows)
+    columns = headers[:max_columns] 
+    df = pd.DataFrame(rows, columns=columns)
+    return df
+
+# URLs for each state's results (replace with actual URLs)
+state_urls = {
+    'up': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S24.htm', 
+    'gujarat': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S06.htm',  
+    'maharashtra': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S13.htm', 
+    'rajasthan': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S08.htm',  
+    'delhi': 'https://results.eci.gov.in/PcResultGenJune2024/partywiseresult-S07.htm'  
+
+
+results = {state: scrape_results(url) for state, url in state_urls.items()}
+
+print(results['delhi'])
+
+bjp_seats = {}
+for state, df in results.items():
+    if not df.empty and 'Party' in df.columns and 'Total' in df.columns:
+        df = df.dropna(subset=['Party'])  
+        df['Total'] = pd.to_numeric(df['Total'], errors='coerce')  
+        df = df.dropna(subset=['Total']) 
+        bjp_results = df[df['Party'].str.contains('BJP', na=False)]  
+        total_seats = bjp_results['Total'].astype(int).sum()  
+        bjp_seats[state] = total_seats
+        print(f'Total seats won by BJP in {state}: {total_seats}')
+
+
+states = list(bjp_seats.keys())
+seats = list(bjp_seats.values())
+
+plt.figure(figsize=(10, 6))
+plt.bar(states, seats, color='orange')
+plt.xlabel('States')
+plt.ylabel('Total Seats Won by BJP')
+plt.title('Total Seats Won by BJP in Each State')
+plt.show()
